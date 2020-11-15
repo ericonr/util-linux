@@ -20,7 +20,7 @@
 #include "caputils.h"
 #include "pathnames.h"
 
-static int test_cap(int cap)
+static int test_cap(unsigned int cap)
 {
 	/* prctl returns 0 or 1 for valid caps, -1 otherwise */
 	return prctl(PR_CAPBSET_READ, cap, 0, 0, 0) >= 0;
@@ -35,19 +35,17 @@ int cap_last_cap(void)
 	if (last_cap) return last_cap;
 
 	/* binary search over capabilities */
-	int cap0 = 0, cap1 = INT_MAX;
-	while (1) {
-		int cap = (cap0 + cap1) / 2;
+	/* starting with cap=INT_MAX means we always know that cap1 is invalid */
+	unsigned int cap0 = 0, cap1 = INT_MAX, cap = INT_MAX;
+	while (cap0 + 1 < cap1) {
 		if (test_cap(cap)) {
 			cap0 = cap;
 		} else {
 			cap1 = cap;
 		}
-
-		if (cap0 + 1 == cap1) break;
+		cap = (cap0 + cap1) / 2;
 	}
 
-	/* either cap0 or cap1 can be the last cap, test */
-	last_cap = test_cap(cap1) ? cap1 : cap0;
+	last_cap = cap;
 	return last_cap;
 }
