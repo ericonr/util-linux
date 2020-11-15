@@ -105,7 +105,6 @@
 
 #define _PATH_PROC_ATTR_CURRENT	"/proc/self/attr/current"
 #define _PATH_PROC_ATTR_EXEC	"/proc/self/attr/exec"
-#define _PATH_PROC_CAPLASTCAP	"/proc/sys/kernel/cap_last_cap"
 
 
 #define _PATH_SYS_BLOCK		"/sys/block"

@@ -14,32 +14,33 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdio.h>
+#include <sys/prctl.h>
+#include <limits.h>
 
 #include "caputils.h"
 #include "pathnames.h"
 
+static int test_cap(int cap)
+{
+	/* prctl returns 0 or 1 for valid caps, -1 otherwise */
+	return prctl(PR_CAPBSET_READ, cap, 0, 0, 0) >= 0;
+}
+
 int cap_last_cap(void)
 {
-	/* CAP_LAST_CAP is untrustworthy. */
-	static int ret = -1;
-	int matched;
-	FILE *f;
+	/* binary search over capabilities */
+	int cap0 = 0, cap1 = INT_MAX;
+	while (1) {
+		int cap = (cap0 + cap1) / 2;
+		if (test_cap(cap)) {
+			cap0 = cap;
+		} else {
+			cap1 = cap;
+		}
 
-	if (ret != -1)
-		return ret;
-
-	f = fopen(_PATH_PROC_CAPLASTCAP, "r");
-	if (!f) {
-		ret = CAP_LAST_CAP;	/* guess */
-		return ret;
+		if (cap0 + 1 == cap1) break;
 	}
 
-	matched = fscanf(f, "%d", &ret);
-	fclose(f);
-
-	if (matched != 1)
-		ret = CAP_LAST_CAP;	/* guess */
-
-	return ret;
+	/* either cap0 or cap1 can be the last cap, test */
+	return test_cap(cap1) ? cap1 : cap0;
 }
