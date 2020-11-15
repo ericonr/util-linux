@@ -26,8 +26,14 @@ static int test_cap(int cap)
 	return prctl(PR_CAPBSET_READ, cap, 0, 0, 0) >= 0;
 }
 
+/* this cache makes cap_last_cap MT-unsafe */
+static int last_cap = 0;
+
 int cap_last_cap(void)
 {
+	/* cached last_cap value */
+	if (last_cap) return last_cap;
+
 	/* binary search over capabilities */
 	int cap0 = 0, cap1 = INT_MAX;
 	while (1) {
@@ -42,5 +48,6 @@ int cap_last_cap(void)
 	}
 
 	/* either cap0 or cap1 can be the last cap, test */
-	return test_cap(cap1) ? cap1 : cap0;
+	last_cap = test_cap(cap1) ? cap1 : cap0;
+	return last_cap;
 }
